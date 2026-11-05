@@ -1,5 +1,5 @@
 {
-    "name": "augustdai/laravel-plugin",
+    "name": "jyim/laravel-plugin",
     "version": "2.0.0",
     "description": "Laravel 10x 适配版插件系统",
     "license": "MIT",
