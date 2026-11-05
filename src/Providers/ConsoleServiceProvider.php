@@ -21,7 +21,6 @@ use Jyim\LaravelPlugin\Console\Commands\PluginCommand;
 use Jyim\LaravelPlugin\Console\Commands\PluginDeleteCommand;
 use Jyim\LaravelPlugin\Console\Commands\PluginMakeCommand;
 use Jyim\LaravelPlugin\Console\Commands\ProviderMakeCommand;
-use Jyim\LaravelPlugin\Console\Commands\PublishCommand;
 use Jyim\LaravelPlugin\Console\Commands\RegisterCommand;
 use Jyim\LaravelPlugin\Console\Commands\RouteProviderMakeCommand;
 use Jyim\LaravelPlugin\Console\Commands\SeedMakeCommand;
@@ -59,7 +58,6 @@ class ConsoleServiceProvider extends ServiceProvider
         EnableCommand::class,
         PluginDeleteCommand::class,
         InstallCommand::class,
-        PublishCommand::class,
         RegisterCommand::class,
         LoginCommand::class,
         UploadCommand::class,
