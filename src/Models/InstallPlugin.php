@@ -27,7 +27,7 @@ class InstallPlugin extends Model
      */
     public function scopeEnable(Builder $query): Builder
     {
-        return $query->where('status', PluginStatus::enable());
+        return $query->where('status', PluginStatus::ENABLE);
     }
 
     public function getStatusAttribute(int $status)
@@ -37,7 +37,7 @@ class InstallPlugin extends Model
 
     public function setStatusAttribute(PluginStatus $value)
     {
-        $this->attributes['status'] = $value->value;
+        $this->attributes['status'] = $value instanceof PluginStatus ? $value->value : (int) $value;
     }
 
     /**
@@ -46,7 +46,7 @@ class InstallPlugin extends Model
      */
     public function scopeDisable(Builder $query): Builder
     {
-        return $query->where('status', PluginStatus::disable());
+        return $query->where('status', PluginStatus::DISABLE);
     }
 
     /**
