@@ -214,10 +214,8 @@ class Installer
                     return "{$this->type}:{$this->name}.git";
                 }
 
-                // 上游写的是裸 return;，而本方法声明为 ?string ——
-                // PHP 8 起这是编译期致命错误，整个文件无法加载（plugin:install --repo 早已不可用）。
-                // 语义上就是「没有地址」，显式返回 null。
-                return null;
+                return;
+                break;
         }
     }
 

@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use Symfony\Component\Process\Process;
 use Jyim\LaravelPlugin\Contracts\RepositoryInterface;
-use Jyim\LaravelPlugin\Support\Assets\PluginAssets;
 use Jyim\LaravelPlugin\Exceptions\InvalidAssetPath;
 use Jyim\LaravelPlugin\Exceptions\PluginNotFoundException;
 use Jyim\LaravelPlugin\Support\Collection;
@@ -45,20 +44,6 @@ class FileRepository implements RepositoryInterface
      * @var array
      */
     protected array $paths = [];
-
-    /**
-     * 本次实例内解析出来的插件清单，避免同一请求里反复扫盘。
-     *
-     * 为什么需要：register() 与 boot() 各自走 getOrdered() → allEnabled() → all()，
-     * 关缓存时每次都是 glob 134 个 plugin.json 再 new 134 个 Plugin；即便开了缓存，
-     * 也还要把 134 条缓存记录重新组装成对象。而 all() 还被 has()/find()/count() 调用，
-     * 一次请求里能命中好几遍。
-     *
-     * 只在实例生命周期内有效（请求级单例），enable/disable/delete 时会主动作废。
-     *
-     * @var array<string, Plugin>|null
-     */
-    protected ?array $resolved = null;
 
     /**
      * @var string
@@ -188,15 +173,11 @@ class FileRepository implements RepositoryInterface
      */
     public function all(): array
     {
-        if ($this->resolved !== null) {
-            return $this->resolved;
+        if (! $this->config('cache.enabled')) {
+            return $this->scan();
         }
 
-        $this->resolved = $this->config('cache.enabled')
-            ? $this->formatCached($this->getCached())
-            : $this->scan();
-
-        return $this->resolved;
+        return $this->formatCached($this->getCached());
     }
 
     /**
@@ -513,27 +494,9 @@ class FileRepository implements RepositoryInterface
     /**
      * @inheritDoc
      */
-    /**
-     * 某个插件的静态资源目录（**包内**绝对路径）。
-     *
-     * 改造前它返回的是 public/plugins/{alias} —— 因为那时资源是被发布到 web 根目录
-     * 再由 nginx 直发的。现在资源留在插件自己的 assets/ 里，这个方法的语义相应变成
-     * 「素材在磁盘上的真身在哪」，由 PluginAssets/AssetController 负责对外提供。
-     *
-     * 找不到插件目录时按约定路径返回（不抛异常）：调用方多数只是拼路径，
-     * 真不存在的后果是下一层解析不到文件 → 404，比在拼路径处炸掉更好排查。
-     */
     public function assetPath(string $plugin): string
     {
-        $found = $this->find($plugin);
-
-        if ($found !== null) {
-            return $found->getPath().'/assets';
-        }
-
-        // 清单里没有（插件刚拷进来还没被缓存收录、或名字写法不同）时按目录名兜底，
-        // 与 create-plugin 的约定一致：plugins/{StudlyName}/assets
-        return $this->getPath().'/'.Str::studly($plugin).'/assets';
+        return $this->config('paths.assets').'/'.$plugin;
     }
 
     /**
@@ -611,6 +574,16 @@ class FileRepository implements RepositoryInterface
     }
 
     /**
+     * Get plugins assets path.
+     *
+     * @return string
+     */
+    public function getAssetsPath(): string
+    {
+        return $this->config('paths.assets');
+    }
+
+    /**
      * Get asset url from a specific plugins.
      *
      * @param  string  $asset
@@ -625,11 +598,11 @@ class FileRepository implements RepositoryInterface
         }
         [$name, $url] = explode(':', $asset);
 
-        // 私有化之后不再有「public 目录下的 baseUrl」可拼：URL 就是插件素材出口
-        // /plugins/{alias}/{path}（见 PluginAssets::url 与 AssetController）。
-        // 保持 str_replace 协议与改造前一致（https?:// → //），免得某个页面的
-        // 协议判定依赖它。
-        return str_replace(['http://', 'https://'], '//', app(PluginAssets::class)->url($name, $url));
+        $baseUrl = str_replace(public_path().DIRECTORY_SEPARATOR, '', $this->getAssetsPath());
+
+        $url = $this->url->asset($baseUrl."/{$name}/".$url);
+
+        return str_replace(['http://', 'https://'], '//', $url);
     }
 
     /**
@@ -659,7 +632,6 @@ class FileRepository implements RepositoryInterface
     public function enable(string $name): void
     {
         $this->findOrFail($name)->enable();
-        $this->resolved = null;
     }
 
     /**
@@ -673,7 +645,6 @@ class FileRepository implements RepositoryInterface
     public function disable(string $name): void
     {
         $this->findOrFail($name)->disable();
-        $this->resolved = null;
     }
 
     /**
@@ -683,10 +654,7 @@ class FileRepository implements RepositoryInterface
     {
         $plugin = $this->findOrFail($name);
 
-        $result = $plugin->delete();
-        $this->resolved = null;
-
-        return $result;
+        return $plugin->delete();
     }
 
     /**

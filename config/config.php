@@ -7,7 +7,7 @@ return [
     // 插件市场
     'market' => [
         // 插件市场 api 域名
-        'api_base' => 'http://plugin.amin.wiki/',
+        'api_base' => 'https://plugin.amin.wiki/',
         // 插件市场默认调用的 client class
         'default' => \Jyim\LaravelPlugin\Support\Client\Market::class,
     ],

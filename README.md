@@ -1,6 +1,6 @@
-# Laravel Plugin 
+# Laravel8.x Plugin 
 
-### [中文文档](http://docs-plugin.amin.wiki/)
+### [中文文档](http://docs-plugin-amin.wiki/)
 
 ## About Laravel Plugin
 Laravel Plugin is a plugin mechanism solution for developers who need to build their own ecosystem，With it you can build a wordpress-like ecosystem. It can help you as follows：
@@ -20,7 +20,7 @@ Laravel Plugin is a plugin mechanism solution for developers who need to build t
 * laravel >= 8.0
 
 ## v1.1.0 Development Plan
-* [x] Support laravel 10
+* [x] Support laravel 8.x
 * [ ] Replace FileRepository with MysqlRepository
 * [ ] Complete `Laravel-plugin-ui`
 
@@ -30,7 +30,7 @@ Laravel Plugin is a plugin mechanism solution for developers who need to build t
 
 * Step 1
 ```shell
-composer require Jyim/laravel-plugin
+composer require jyim/laravel-plugin
 ```
 
 * Step 2

@@ -3,12 +3,10 @@
 namespace Jyim\LaravelPlugin\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Route;
 use Jyim\LaravelPlugin\Contracts\ActivatorInterface;
 use Jyim\LaravelPlugin\Contracts\ClientInterface;
 use Jyim\LaravelPlugin\Contracts\RepositoryInterface;
 use Jyim\LaravelPlugin\Exceptions\InvalidActivatorClass;
-use Jyim\LaravelPlugin\Support\Assets\PluginAssets;
 use Jyim\LaravelPlugin\Support\Repositories\FileRepository;
 use Jyim\LaravelPlugin\Support\Stub;
 
@@ -21,28 +19,6 @@ class PluginServiceProvider extends ServiceProvider
     {
         $this->registerPlugins();
         $this->registerPublishing();
-        $this->registerAssetRoute();
-    }
-
-    /**
-     * 插件静态资源出口：GET /plugins/{alias}/{path}
-     *
-     * 挂在包外（不套 web 中间件组）：素材请求不该产生会话写入，也不该被 CSRF 拦。
-     * 注册在 config('plugins.assets.serve')=false 时整体关掉，用于「临时退回
-     * 由 nginx/CDN 直发某份拷贝」的应急口径 —— 关掉后 PHP 不再兜住这些 URL。
-     */
-    protected function registerAssetRoute(): void
-    {
-        if (! (bool) config('plugins.assets.serve', true)) {
-            return;
-        }
-
-        $prefix = trim((string) config('plugins.assets.route', '/plugins'), '/');
-
-        Route::get('/' . $prefix . '/{alias}/{path}', [\Jyim\LaravelPlugin\Http\Controllers\AssetController::class, 'serve'])
-            ->where('alias', '[A-Za-z0-9_.\\-]+')
-            ->where('path', '.+')
-            ->name('plugin.asset');
     }
 
     /**
@@ -116,9 +92,6 @@ class PluginServiceProvider extends ServiceProvider
             }
 
             return new $class();
-        });
-        $this->app->singleton(PluginAssets::class, function ($app) {
-            return new PluginAssets($app[RepositoryInterface::class]);
         });
         $this->app->alias(RepositoryInterface::class, 'plugins.repository');
         $this->app->alias(ActivatorInterface::class, 'plugins.activator');
