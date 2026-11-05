@@ -1,6 +1,5 @@
 {
     "name": "augustdai/laravel-plugin",
-    "version": "10.0.0-dev",
     "description": "Laravel 10 适配版插件系统",
     "license": "MIT",
     "authors": [
